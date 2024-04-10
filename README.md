@@ -12,9 +12,6 @@ Welcome to the Python Game Development Repository. The purpose of creating the P
 TEAM MEMBERS : 
 
 1.Naveen Kumar
-
 2. Mudit
-
 3. Dhruv Pandey
-
 4. Navsirat Singh
