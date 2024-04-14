@@ -1,189 +1,156 @@
-import random
-import tkinter as tk
-from tkinter import messagebox
+import pygame #GUI using pygame 
+import math 
+import random 
 
-# Hangman stages to display
-HANGMAN_STAGES = ['''
-    +---+
-         |
-         |
-         |
-        ===''', '''
-    +---+
-    O   |
-        |
-        |
-       ===''', '''
-    +---+
-    O   |
-    |   |
-        |
-       ===''', '''
-    +---+
-    O   |
-   /|   |
-        |
-       ===''', r'''
-    +---+
-    O   |
-   /|\  |
-        |
-       ===''', r'''
-    +---+
-    O   |
-   /|\  |
-   /    |
-       ===''', r'''
-    +---+
-    O   |
-   /|\  |
-   / \  |
-       ===''']
+pygame.init() 
+WIDTH, HEIGHT= 1100, 700
+win=pygame.display.set_mode((WIDTH,HEIGHT)) 
+pygame.display.set_caption("HANGMAN") 
 
-# Define words for each genre and difficulty level
-genre_words = {
-    "food": {
-        "easy": ['Pizza', 'Burger', 'Salad', 'Pasta', 'Soup', 'Fries', 'Sushi', 'Taco', 'Cake', 'Pie', 'Bread', 'Cheese', 'Cookie', 'Donut', 'Apple'],
-        "medium": ['Lasagna', 'Sausage', 'Sandwich', 'Dumpling', 'Spaghetti', 'Burrito', 'Popcorn', 'Pancake', 'Muffin', 'Noodle', 'Broccoli', 'Waffle', 'Avocado', 'Croissant', 'Churro'],
-        "hard": ['Cappuccino', 'Bruschetta', 'Guacamole', 'Cupcake', 'Quiche', 'Pineapple', 'Artichoke', 'Cannoli', 'Gelato', 'Macaroni', 'Ceviche', 'Kimchi', 'Sorbet', 'Tiramisu', 'Meringue']
-    },
-    "country": {
-        "easy": ['USA', 'UK', 'Japan', 'China', 'India', 'France', 'Canada', 'Brazil', 'Germany', 'Italy', 'Spain', 'Russia', 'Mexico', 'Australia', 'Egypt'],
-        "medium": ['Argentina', 'Thailand', 'Greece', 'Sweden', 'Turkey', 'Nigeria', 'Norway', 'Netherlands', 'Belgium', 'Portugal', 'Vietnam', 'South Africa', 'Morocco', 'Pakistan', 'Philippines'],
-        "hard": ['Singapore', 'Switzerland', 'Indonesia', 'Austria', 'Denmark', 'Ireland', 'Finland', 'New Zealand', 'Iran', 'Malaysia', 'Chile', 'Peru', 'Israel', 'Saudi Arabia', 'Hungary']
-    },
-    "animal": {
-        "easy": ['Cat', 'Dog', 'Fish', 'Bird', 'Lion', 'Tiger', 'Bear', 'Rabbit', 'Deer', 'Horse', 'Cow', 'Pig', 'Goat', 'Duck', 'Sheep'],
-        "medium": ['Elephant', 'Giraffe', 'Monkey', 'Kangaroo', 'Penguin', 'Zebra', 'Raccoon', 'Koala', 'Squirrel', 'Hippo', 'Crocodile', 'Ostrich', 'Gorilla', 'Panda', 'Rhino'],
-        "hard": ['Chimpanzee', 'Koala', 'Orangutan', 'Porcupine', 'Meerkat', 'Platypus', 'Armadillo', 'Aardvark', 'Hyena', 'Komodo Dragon', 'Sloth', 'Tapir', 'Fossa', 'Marmoset', 'Manatee']
-    },
-    "technology": {
-        "easy": ['Computer', 'Phone', 'Mouse', 'Keyboard', 'Tablet', 'Printer', 'Monitor', 'Laptop', 'Speaker', 'Headphones', 'Camera', 'Charger', 'Cable', 'Battery', 'Router'],
-        "medium": ['Smartwatch', 'Microphone', 'Scanner', 'Projector', 'Drone', 'Satellite', 'Robot', 'GPS', 'Gadget', 'Processor', 'Database', 'Firewall', 'Software', 'Operating System', 'Internet'],
-        "hard": ['Augmented Reality', 'Virtual Reality', 'Artificial Intelligence', 'Quantum Computing', 'Blockchain', 'Cryptocurrency', 'Biometrics', 'Cybersecurity', 'Data Science', 'Machine Learning', 'Deep Learning', 'Neural Network', 'Algorithm', 'Encryption', 'IoT']
-    },
-    "sports": {
-        "easy": ['Football', 'Soccer', 'Basketball', 'Tennis', 'Golf', 'Baseball', 'Volleyball', 'Hockey', 'Rugby', 'Cricket', 'Boxing', 'Swimming', 'Cycling', 'Running', 'Skiing'],
-        "medium": ['Badminton', 'Table Tennis', 'Diving', 'Wrestling', 'Surfing', 'Gymnastics', 'Fencing', 'Rowing', 'Judo', 'Skateboarding', 'Handball', 'Archery', 'Squash', 'Triathlon', 'Weightlifting'],
-        "hard": ['Pole Vault', 'Bobsleigh', 'Synchronized Swimming', 'Water Polo', 'Taekwondo', 'Rhythmic Gymnastics', 'Ski Jumping', 'Biathlon', 'Luge', 'Skeleton', 'Equestrian', 'Modern Pentathlon', 'Canoe Slalom', 'Trampoline', 'Beach Volleyball']
-    },
-    "random": {
-        "easy": 'Bird Jump Desk Fish Cake Chair Plant House River Smile Cloud Paper Apple Happy Music Turtle Rabbit Garden Orange Window'.split(),
-        "medium": 'Mango Rhino Puzzle Ocean Chair Coral Forest Castle Unicorn Diamond Wizard Mosaic Canyon Journey Crystal Desert Spirit Glacier Mystery Rainbow Miracle'.split(),
+FPS=60
+clock=pygame.time.Clock() 
+run=True
+imag=pygame.image.load('lose.png')
 
-"hard": 'Planetarium Dimensional Democracy Algorithm Exquisite Tyrannosaur Octagonal Nucleotide Labyrinth Barricade Quasar Kaleidoscope Extraterrestrial Dystopian Paradoxical Phenomenon Obelisk Holographic Renaissance Infiltrate Bibliophile'.split()
-    }
-}
+#buttons 
+radius=20
+space=20
+letters=[] #[399,122,"A",True] 
+x_start=round(135+(WIDTH-(radius*2 + space)*13)/2) 
+y_start=500
 
-def chooseRandomWord(word_list):
-    #Returns a random word from the provided list of words.
-    return random.choice(word_list)
+A=65 # Using ACII value to print letters on the button. A->65, B->66 and so on 
 
-def displayBoard():
-    # Clear the canvas
-    hangman_canvas.delete("all")
-    # Display game elements on the canvas
-    hangman_canvas.create_text(200, 20, text="HANGMAN", font=('Helvetica', 20, 'bold'), fill='black')
-    hangman_canvas.create_text(200, 50, text='Missed letters: ' + ' '.join(missed_letters), font=('Helvetica', 12), fill='black')
-    # Display the current state of the word being guessed
-    word_display = ' '.join(letter if letter.lower() in correct_letters else '_' for letter in secret_word)
-    hangman_canvas.create_text(200, 100, text=word_display, font=('Helvetica', 16), fill='black')
-    # Display the hangman stage based on the number of missed letters
-    hangman_canvas.create_text(200, 150, text=HANGMAN_STAGES[len(missed_letters)], font=('Courier', 12), anchor=tk.CENTER, fill='black')
+for i in range(26): 
+	x=x_start + space*2 + ((radius*2 + space)* (i%13)) 
+	y=y_start + ((i//13) * (space + radius*2)) 
+	letters.append([x,y,chr(A+i),True]) 
 
-def checkGuess():
-    global game_is_done
-    # Get the guess from the entry and convert it to lowercase
-    guess = guess_entry.get().lower()
-    if len(guess) != 1 or guess not in 'abcdefghijklmnopqrstuvwxyz':
-        messagebox.showerror("Invalid Guess", "Please enter a single letter from the alphabet.")
-    elif guess in missed_letters or guess in correct_letters:
-        messagebox.showinfo("Already Guessed", "You have already guessed that letter. Please try again.")
-    elif guess in secret_word.lower():  # Convert secret_word to lowercase for comparison
-        correct_letters.add(guess)
-        if set(secret_word.lower()) <= correct_letters:  # Convert secret_word to lowercase for comparison
-            messagebox.showinfo("Congratulations", "You guessed it!\nThe secret word is '{}'.".format(secret_word))
-            game_is_done = True
-    else:
-        missed_letters.add(guess)
-        if len(missed_letters) == len(HANGMAN_STAGES) - 1:
-            messagebox.showinfo("Game Over", "You have run out of guesses!\nThe word was '{}'.".format(secret_word))
-            game_is_done = True
-    displayBoard()
-    guess_entry.delete(0, 'end')
+# Fonts 
+font=pygame.font.SysFont("Releway",55) 
+WORD=pygame.font.SysFont("Releway",50,) 
+TITLE=pygame.font.SysFont("Releway",70,) 
+TI=pygame.font.SysFont("Releway",20,italic=True)
+NUM=pygame.font.SysFont("Releway",55,italic=True,bold=True)
 
-def startGame():
-    global words, secret_word
-    genre = genre_var.get()
-    difficulty_level = difficulty.get()
-    if genre and difficulty_level:
-        words = genre_words.get(genre, {}).get(difficulty_level, [])
-        if words:
-            secret_word = chooseRandomWord(words)
-            displayBoard()
-        else:
-            messagebox.showerror("Error", "No words found for the selected genre and difficulty level.")
-    else:
-        messagebox.showerror("Error", "Please select both a genre and a difficulty level.")
+# Time to load images so we can draw a hangman 
+images=[] 
+for i in range(0,7): 
+	image=pygame.image.load("hangman"+str(i)+".png") 
+	imagee=pygame.transform.scale(image,(300,660))
+	images.append(imagee) 
 
-root = tk.Tk()
-root.title("Hangman Game")
-root.configure(bg='#e3d9fc')  # Set background color to light lilac
+print(images) 
 
-# Create a canvas for displaying the game elements
-hangman_canvas = tk.Canvas(root, width=400, height=200, bg='#e3d9fc')
-hangman_canvas.pack()
+# game variable 
+hangman=0
+lists=["GEEKS","GFG","DOCKER","DEVELOPER","RUST","GITHUB","PYTHON","BASH"] 
+words=random.choice(lists) 
+guessed=[] # to track the letters we have guessed 
 
-# Initialize variables
-missed_letters = set()
-correct_letters = set()
-difficulty = tk.StringVar()
-genre_var = tk.StringVar()
+# function to draw buttons, and hangman 
+def draw(): 
+	# win.fill((255, 255, 255)) # display with white color
+ # baground 
+	size=pygame.transform.scale(imag,(1100,700))
+	win.blit(size,(0,0))
+	# TITLE for the game 
 
-# Create GUI elements
-difficulty_label = tk.Label(root, text="Select difficulty level:", bg='#e3d9fc')
-difficulty_label.pack()
+	title=TITLE.render("HangMan",1,(0,0,0,0)) 
+	win.blit(title,(WIDTH/1.8 -title.get_width(), 10)) # Title in center and then y axis= 24 
+	ti=TI.render("Classic Word-Guessing.........",1,(0,0,0,0))
+	win.blit(ti,(580,55))
+	num=NUM.render(str((6-hangman)),1,(0,0,0,0))
+	win.blit(num,(1000,20))
+	
 
-easy_button = tk.Radiobutton(root, text="Easy", variable=difficulty, value="easy", bg='#e3d9fc')
-easy_button.pack()
+	# draw word on the screen 
+	disp_word="" 
+	for letter in words: 
+		if letter in guessed: 
+			disp_word += letter + " "
 
-medium_button = tk.Radiobutton(root, text="Medium", variable=difficulty, value="medium", bg='#e3d9fc')
-medium_button.pack()
+		else: 
+			disp_word +="_ "
 
-hard_button = tk.Radiobutton(root, text="Hard", variable=difficulty, value="hard", bg='#e3d9fc')
-hard_button.pack()
+	text=WORD.render(disp_word,1,(0,0,0,0)) 
+	win.blit(text,(650,300)) 
 
-# Add space
-tk.Label(root, text="", bg='#e3d9fc').pack()
+	#buttons at center 
+	for btn_pos in letters: 
+		x,y,ltr,visible=btn_pos # making button visible and invisible after clikcing it 
 
-# Label and Radiobuttons for selecting genre
-genre_label = tk.Label(root, text="Select genre:", bg='#e3d9fc')
-genre_label.pack()
+		if visible: 
+			pygame.draw.rect(win,(0,0,0,0),(0,540,0,0))
+			txt=font.render(ltr,1,(0,0,0,0)) 
+			win.blit(txt,(x-txt.get_width()/2,y-txt.get_height()/2)) 
 
-for genre in genre_words.keys():
-    tk.Radiobutton(root, text=genre.capitalize(), variable=genre_var, value=genre, bg='#e3d9fc').pack()
+	win.blit(images[hangman], (45, 45)) 
+	pygame.display.update() 
 
-# Add space
-tk.Label(root, text="", bg='#e3d9fc').pack()
 
-start_button = tk.Button(root, text="Start Game", command=startGame, bg='#e3d9fc')
-start_button.pack()
 
-# Add space
-tk.Label(root, text="", bg='#e3d9fc').pack()
+while run: 
+	clock.tick(FPS) 
+	draw() 
 
-guess_label = tk.Label(root, text="Enter your guess:", bg='#e3d9fc')
-guess_label.pack()
+	for event in pygame.event.get(): # Triggering the event 
+		if event.type==pygame.QUIT: 
+			run=False
 
-guess_entry = tk.Entry(root)
-guess_entry.pack()
+		if event.type==pygame.MOUSEBUTTONDOWN: 
 
-# Add space
-tk.Label(root, text="", bg='#e3d9fc').pack()
+			x_mouse, y_mouse=pygame.mouse.get_pos() 
+			#print(pos) 
 
-submit_button = tk.Button(root, text="Submit Guess", command=checkGuess, bg='#e3d9fc')
-submit_button.pack()
+			for letter in letters: 
+				x,y,ltr,visible=letter 
 
-# Start the tkinter event loop
-root.mainloop()
+				if visible: 
+					dist = math.sqrt((x - x_mouse) ** 2 + (y - y_mouse) ** 2) 
 
+					if dist<=radius: 
+						letter[3]=False #to invisible the clicked button 
+						guessed.append(ltr) 
+						if ltr not in words: 
+							hangman +=1
+
+# -------------------------------------------------------------------------------- 
+# deciding if you won the game or not 
+	won=True
+	for letter in words: 
+		if letter not in guessed: 
+			won=False
+			break
+
+	if won: 
+		draw() 
+		pygame.time.delay(1000) 
+		win.fill((0,0,0,0)) 
+		text=WORD.render("YOU WON",1,(129,255,0,255)) 
+		win.blit(text,(WIDTH/2 - text.get_width()/2, HEIGHT/2 - text.get_height()/2)) 
+		pygame.display.update() 
+		pygame.time.delay(4000) 
+		print("WON") 
+		break
+
+	if hangman==6: 
+		draw() 
+		pygame.time.delay(1000) 
+		win.fill((0, 0, 0, 0)) 
+		text = WORD.render("YOU LOST", 1, (255, 0, 5, 255)) 
+		answer=WORD.render("The answer is "+words,1,(129,255,0,0)) 
+		win.blit(text, (WIDTH / 2 - text.get_width() / 2, 
+						HEIGHT / 2 - text.get_height() / 2)) 
+		win.blit(answer, ((WIDTH / 2 - answer.get_width() / 2), 
+						(HEIGHT / 2 - text.get_height() / 2)+70)) 
+
+		pygame.display.update() 
+		pygame.time.delay(4000) 
+		print("LOST") 
+		break
+
+
+
+
+pygame.quit()
